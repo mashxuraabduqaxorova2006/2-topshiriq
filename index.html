@@ -1,13 +1,184 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nova DApp | Connect Web3 Wallet</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web3 Wallet Connect Pro | 2-topshiriq</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --bg: #030712;
+            --card: #111827;
+            --border: #1f2937;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.3);
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: radial-gradient(circle at 50% -20%, #1e1b4b, transparent);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo-box {
+            width: 64px; height: 64px;
+            background: var(--primary-glow);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 2rem;
+        }
+
+        h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+        p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 32px; }
+
+        .wallet-info {
+            background: #030712;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: none;
+            text-align: left;
+        }
+        .wallet-info.show { display: block; }
+        .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .val { font-family: monospace; font-size: 0.85rem; color: var(--primary); word-break: break-all; margin-bottom: 12px; }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--primary-glow); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            margin-top: 12px;
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); }
+
+        .status-dot {
+            display: inline-block; width: 8px; height: 8px;
+            border-radius: 50%; background: #ef4444;
+            margin-right: 8px;
+        }
+        .status-dot.online { background: #10b981; box-shadow: 0 0 10px #10b981; }
+
+        .badge {
+            font-size: 0.7rem; font-weight: 700;
+            padding: 4px 10px; border-radius: 50px;
+            background: #1f2937; color: var(--text-muted);
+            margin-bottom: 16px; display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="card">
+            <div class="badge">TASK 2 • WALLET CONNECT</div>
+            <div class="logo-box">🦊</div>
+            <h1>Web3 Hamyon</h1>
+            <p>Hamyoningizni xavfsiz ulang va Web3 olamiga kiring.</p>
+
+            <div class="wallet-info" id="infoBox">
+                <div class="label">Manzil:</div>
+                <div class="val" id="addr">Ulanmagan</div>
+                <div class="label">Balans:</div>
+                <div class="val" id="balance">0.00 ETH</div>
+                <div class="label">Tarmoq:</div>
+                <div class="val" id="network"><span class="status-dot"></span>Noma'lum</div>
+            </div>
+
+            <button class="btn btn-primary" id="connectBtn">Ulashni Boshlash</button>
+            <button class="btn btn-outline" id="disconnectBtn" style="display: none;">Ulanishni Uzish</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script>
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const infoBox = document.getElementById('infoBox');
+        const addrTxt = document.getElementById('addr');
+        const balTxt = document.getElementById('balance');
+        const netTxt = document.getElementById('network');
+
+        let provider;
+
+        async function connect() {
+            if (window.ethereum) {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    const signer = provider.getSigner();
+                    const address = await signer.getAddress();
+                    const balance = await provider.getBalance(address);
+                    const network = await provider.getNetwork();
+
+                    addrTxt.innerText = address;
+                    balTxt.innerText = ethers.utils.formatEther(balance).substring(0, 6) + " ETH";
+                    netTxt.innerHTML = `<span class="status-dot online"></span>${network.name.toUpperCase()}`;
+                    
+                    infoBox.classList.add('show');
+                    connectBtn.style.display = 'none';
+                    disconnectBtn.style.display = 'block';
+                } catch (error) {
+                    alert("Xatolik: " + error.message);
+                }
+            } else {
+                alert("Iltimos, MetaMask o'rnating!");
+            }
+        }
+
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', () => {
+            infoBox.classList.remove('show');
+            connectBtn.style.display = 'block';
+            disconnectBtn.style.display = 'none';
+        });
+
+        // Listen for account changes
+        if(window.ethereum) {
+            window.ethereum.on('accountsChanged', connect);
+            window.ethereum.on('chainChanged', () => window.location.reload());
+        }
+    </script>
+</body>
 </html>
